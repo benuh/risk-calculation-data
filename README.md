@@ -303,11 +303,3 @@ NODE_ENV=production npm start
 2. Create a feature branch
 3. Implement changes with tests
 4. Submit a pull request
-
-## 📄 License
-
-MIT License - see LICENSE file for details.
-
-## 📞 Support
-
-For questions or support, please refer to the documentation or create an issue in the repository.

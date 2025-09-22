@@ -489,6 +489,52 @@ class CopulaModeling {
     return logLikelihood;
   }
 
+  calculateStudentLogLikelihood(normalData, correlationMatrix, degreesOfFreedom) {
+    const n = normalData[0].length;
+    const d = normalData.length;
+    let logLikelihood = 0;
+
+    const invCorr = this.matrixInverse(correlationMatrix);
+    const detCorr = this.matrixDeterminant(correlationMatrix);
+
+    for (let i = 0; i < n; i++) {
+      const z = normalData.map(series => series[i]);
+      const zT_invCorr_z = this.quadraticForm(z, invCorr);
+
+      const term1 = this.logGamma((degreesOfFreedom + d) / 2);
+      const term2 = -this.logGamma(degreesOfFreedom / 2);
+      const term3 = -d/2 * Math.log(degreesOfFreedom * Math.PI);
+      const term4 = -0.5 * Math.log(detCorr);
+      const term5 = -(degreesOfFreedom + d)/2 * Math.log(1 + zT_invCorr_z / degreesOfFreedom);
+
+      logLikelihood += term1 + term2 + term3 + term4 + term5;
+    }
+
+    return logLikelihood;
+  }
+
+  logGamma(x) {
+    // Stirling's approximation for log gamma function
+    if (x < 12) {
+      return Math.log(Math.abs(this.gamma(x)));
+    }
+    return (x - 0.5) * Math.log(x) - x + 0.5 * Math.log(2 * Math.PI);
+  }
+
+  gamma(x) {
+    // Simplified gamma function approximation
+    if (x < 0.5) {
+      return Math.PI / (Math.sin(Math.PI * x) * this.gamma(1 - x));
+    }
+    if (x < 1.5) {
+      return 1.0;
+    }
+    if (x < 2.5) {
+      return x - 1;
+    }
+    return (x - 1) * this.gamma(x - 1);
+  }
+
   calculateClaytonLogLikelihood(u, v, theta) {
     let logLikelihood = 0;
     const n = u.length;
@@ -619,6 +665,37 @@ class CopulaModeling {
   joeThetaFromTau(tau) {
     // Approximation for Joe copula
     return 2 / (1 - tau);
+  }
+
+  optimizeJoeTheta(u, v, initialTheta) {
+    let theta = Math.max(1.01, initialTheta);
+    let bestLogLikelihood = this.calculateJoeLogLikelihood(u, v, theta);
+
+    for (let candidate = 1.01; candidate <= 10; candidate += 0.1) {
+      const logLikelihood = this.calculateJoeLogLikelihood(u, v, candidate);
+      if (logLikelihood > bestLogLikelihood) {
+        bestLogLikelihood = logLikelihood;
+        theta = candidate;
+      }
+    }
+
+    return theta;
+  }
+
+  calculateJoeLogLikelihood(u, v, theta) {
+    let logLikelihood = 0;
+    const n = u.length;
+
+    for (let i = 0; i < n; i++) {
+      if (u[i] > 0 && v[i] > 0 && u[i] < 1 && v[i] < 1) {
+        const term1 = Math.log(theta - 1 + Math.pow(1 - Math.pow(1 - u[i], theta), 1/theta) * Math.pow(1 - Math.pow(1 - v[i], theta), 1/theta));
+        const term2 = (theta - 1) * (Math.log(1 - u[i]) + Math.log(1 - v[i]));
+
+        logLikelihood += term1 + term2;
+      }
+    }
+
+    return logLikelihood;
   }
 
   // Matrix operations
@@ -814,6 +891,18 @@ class CopulaModeling {
     }
   }
 
+  inverseTransform(u, marginalDistribution) {
+    const { type, mean, standardDeviation } = marginalDistribution;
+
+    switch (type) {
+    case 'normal':
+      const z = this.inverseNormalCDF(u);
+      return mean + standardDeviation * z;
+    default:
+      throw new Error(`Inverse transform not implemented for ${type} distribution`);
+    }
+  }
+
   generateGaussianCopulaSample(parameters) {
     const n = parameters.correlationMatrix.length;
     const normals = Array(n).fill().map(() => this.generateStandardNormal());
@@ -822,6 +911,40 @@ class CopulaModeling {
     const sample = normals.map(z => this.normalCDF(z));
 
     return sample;
+  }
+
+  generateStudentCopulaSample(parameters) {
+    const n = parameters.correlationMatrix.length;
+    const normals = Array(n).fill().map(() => this.generateStandardNormal());
+
+    // Generate chi-squared random variable for t-distribution
+    const chiSquared = this.generateChiSquared(parameters.degreesOfFreedom);
+    const tVariates = normals.map(z => z / Math.sqrt(chiSquared / parameters.degreesOfFreedom));
+
+    // Apply correlation (simplified) and transform to uniform
+    const sample = tVariates.map(t => this.studentTCDF(t, parameters.degreesOfFreedom));
+
+    return sample;
+  }
+
+  generateChiSquared(degreesOfFreedom) {
+    // Simple approximation using sum of squared normals
+    let sum = 0;
+    for (let i = 0; i < degreesOfFreedom; i++) {
+      const normal = this.generateStandardNormal();
+      sum += normal * normal;
+    }
+    return sum;
+  }
+
+  studentTCDF(x, degreesOfFreedom) {
+    // Simplified Student's t CDF approximation
+    if (degreesOfFreedom > 30) {
+      return this.normalCDF(x);
+    }
+
+    // For smaller df, use normal approximation (simplified)
+    return this.normalCDF(x * Math.sqrt(degreesOfFreedom / (degreesOfFreedom + x*x)));
   }
 
   generateStandardNormal() {

@@ -269,17 +269,17 @@ class StatisticalAnalyzer {
     let correlation, pValue, interpretation;
 
     switch (method.toLowerCase()) {
-      case 'pearson':
-        ({ correlation, pValue } = this.pearsonCorrelation(data1, data2));
-        break;
-      case 'spearman':
-        ({ correlation, pValue } = this.spearmanCorrelation(data1, data2));
-        break;
-      case 'kendall':
-        ({ correlation, pValue } = this.kendallCorrelation(data1, data2));
-        break;
-      default:
-        throw new Error('Unsupported correlation method. Use: pearson, spearman, or kendall');
+    case 'pearson':
+      ({ correlation, pValue } = this.pearsonCorrelation(data1, data2));
+      break;
+    case 'spearman':
+      ({ correlation, pValue } = this.spearmanCorrelation(data1, data2));
+      break;
+    case 'kendall':
+      ({ correlation, pValue } = this.kendallCorrelation(data1, data2));
+      break;
+    default:
+      throw new Error('Unsupported correlation method. Use: pearson, spearman, or kendall');
     }
 
     interpretation = this.interpretCorrelation(correlation, pValue);
@@ -545,7 +545,7 @@ class StatisticalAnalyzer {
     const regression = this.simpleLinearRegression(x, data);
 
     const trendDirection = regression.slope > 0 ? 'increasing' :
-                          regression.slope < 0 ? 'decreasing' : 'flat';
+      regression.slope < 0 ? 'decreasing' : 'flat';
 
     const trendStrength = Math.abs(regression.slope) * Math.sqrt(regression.rSquared);
 

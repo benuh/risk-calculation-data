@@ -72,7 +72,7 @@ class QuandlClient {
 
   async getUnemploymentData(country = 'USA') {
     try {
-      const dataset = `FRED/UNRATE`;
+      const dataset = 'FRED/UNRATE';
       const response = await this.client.get(`/datasets/${dataset}/data.json`);
       return response.data;
     } catch (error) {

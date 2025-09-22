@@ -238,7 +238,7 @@ async function main() {
     console.log('\nTo view detailed results:');
     console.log(`   - Open the JSON report in ${reporter.reportDir}`);
     console.log(`   - View visualizations in ${reporter.visualizationDir}`);
-    console.log(`   - Review findings documentation in docs/UNSUPERVISED_ANALYSIS_FINDINGS.md`);
+    console.log('   - Review findings documentation in docs/UNSUPERVISED_ANALYSIS_FINDINGS.md');
 
     // Generate markdown summary
     try {

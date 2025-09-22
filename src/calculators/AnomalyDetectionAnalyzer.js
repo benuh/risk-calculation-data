@@ -786,14 +786,14 @@ class AnomalyDetectionAnalyzer {
     let thresholds;
 
     switch (method) {
-      case 'zscore':
-        thresholds = { low: 2, medium: 3, high: 4, extreme: 5 };
-        break;
-      case 'isolation':
-        thresholds = { low: 0.5, medium: 0.6, high: 0.7, extreme: 0.8 };
-        break;
-      default:
-        thresholds = { low: 1, medium: 2, high: 3, extreme: 4 };
+    case 'zscore':
+      thresholds = { low: 2, medium: 3, high: 4, extreme: 5 };
+      break;
+    case 'isolation':
+      thresholds = { low: 0.5, medium: 0.6, high: 0.7, extreme: 0.8 };
+      break;
+    default:
+      thresholds = { low: 1, medium: 2, high: 3, extreme: 4 };
     }
 
     if (score >= thresholds.extreme) return 'extreme';
